@@ -1,7 +1,9 @@
+# serializers.py
 from rest_framework import serializers
-from .models import Item
+from django.contrib.auth.models import User
+from .models import UserProfile
 
-class ItemSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Item
-        fields = '__all__'
+        model = UserProfile  # 指定模型为UserProfile
+        fields = ['avatar']  # 序列化avatar字段

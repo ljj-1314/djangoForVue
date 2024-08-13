@@ -35,9 +35,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "api.apps.ApiConfig",
     'rest_framework',
     'corsheaders',
+    "api.apps.ApiConfig",
+    "article.apps.ArticleConfig"
 ]
 
 MIDDLEWARE = [
@@ -154,7 +155,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
+MEDIA_URL = '/media/'  # 媒体文件的URL路径前缀
+MEDIA_ROOT = BASE_DIR / 'media'  # 媒体文件的存储路径
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
