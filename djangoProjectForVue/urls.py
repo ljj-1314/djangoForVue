@@ -21,7 +21,9 @@ from django.urls import path, include
 from djangoProjectForVue import settings
 
 urlpatterns = [
-                  path('admin/', admin.site.urls),
-                  path('api/', include('api.urls')),
-                  path('article/', include('article.urls')),
+              path('admin/', admin.site.urls),
+              path('user/', include('user.urls')),
+              path('article/', include('article.urls')),
+              path('store/', include('store.urls')),
+              path('image/', include('image.urls')),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

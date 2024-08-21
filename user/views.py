@@ -8,20 +8,7 @@ from rest_framework import generics
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from api.models import UserProfile
-from api.serializers import UserProfileSerializer
-
-
-@api_view(['POST'])
-@parser_classes([MultiPartParser, FormParser])
-def upload_avatar(request):
-    user = request.user
-    profile, created = UserProfile.objects.get_or_create(user=user)
-    serializer = UserProfileSerializer(profile, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return JsonResponse({'respMsg': '头像上传成功', 'code': '200'}, status=200)
-    return JsonResponse(serializer.errors, status=400)
+from image.models import ImageSave
 
 
 def register(request):
@@ -61,8 +48,7 @@ def login(request):
         username = data.get('userName')
         password = data.get('passWord')
         resUser = auth.authenticate(request, username=username, password=password)
-        user_profile = UserProfile.objects.filter(user_id=resUser.id).first()
-        avatar_url = user_profile.avatar.url if user_profile and user_profile.avatar else None
+
         if resUser and resUser.is_active:
             auth.login(request, resUser)
             return JsonResponse({'message': '用户登录成功', 'data': {
@@ -70,7 +56,6 @@ def login(request):
                 'userName': resUser.username,
                 'firstName': resUser.first_name,
                 'lastName': resUser.last_name,
-                'avatar': avatar_url,
             }, 'ok': True, 'code': '200'}, status=200)
         else:
             return JsonResponse({'message': '登录失败，用户名或密码错误', 'code': '400'}, status=400)
@@ -89,10 +74,9 @@ def getUserInfo(request):
             return JsonResponse({'message': '缺少用户ID', 'code': '400'}, status=400)
         # 尝试获取 UserProfile 对象
         try:
-            user_profile = UserProfile.objects.get(user_id=id)
-        except UserProfile.DoesNotExist:
+            user_profile = User.objects.get(user_id=id)
+        except User.DoesNotExist:
             return JsonResponse({'message': '用户信息不存在', 'code': '400'}, status=400)
-        avatar_url = user_profile.avatar.url if user_profile.avatar else None
         # 检查用户是否活跃
         if user_profile.user.is_active:
             return JsonResponse({'message': '获取信息成功', 'data': {
@@ -100,7 +84,7 @@ def getUserInfo(request):
                 'userName': user_profile.user.username,
                 'firstName': user_profile.user.first_name,
                 'lastName': user_profile.user.last_name,
-                'avatar': avatar_url,
+
             }, 'ok': True, 'code': '200'}, status=200)
         else:
             return JsonResponse({'message': '用户账户未激活', 'code': '400'}, status=400)
@@ -127,6 +111,13 @@ def update_user_info(request):
         user.password = data.get('password', user.password)
         user.first_name = data.get('firstName', user.first_name)
         user.last_name = data.get('lastName', user.last_name)
+        image_id = data.get('image_id')
+        if image_id:
+            try:
+                image = ImageSave.objects.get(id=image_id)
+                user.image = image
+            except ImageSave.DoesNotExist:
+                return JsonResponse({'message': '图片不存在', 'code': '400'}, status=400)
         # 保存更新后的信息
         user.save()
 
