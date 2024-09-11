@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from image.models import ImageSave
+
 
 class StoreType(models.Model):
     no = models.AutoField(primary_key=True, verbose_name='编号')
@@ -21,6 +23,7 @@ class Store(models.Model):
     store_type = models.ManyToManyField(StoreType, verbose_name='商品类别')
     value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='售价')
     manufacturer = models.CharField(max_length=100, verbose_name='厂家')
+    images = models.ManyToManyField(ImageSave, blank=True, verbose_name='商品图片')
 
     def __str__(self):
         types_titles = ', '.join([item.title for item in self.store_type.all()])

@@ -8,4 +8,7 @@ urlpatterns = [
     path('storeTypeDetail', apiViews.store_type_detail),
     path('storeTypeDelete', apiViews.store_type_delete),
     path('createStore', apiViews.create_store),
+    path('updateStore', apiViews.update_store),
+    path('deleteStore',apiViews.store_delete),
+    path('storeList', apiViews.store_list),
 ]

@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from image.models import ImageSave
+from user.models import UserProfile
 
 
 def register(request):
@@ -48,7 +49,7 @@ def login(request):
         username = data.get('userName')
         password = data.get('passWord')
         resUser = auth.authenticate(request, username=username, password=password)
-
+        profile = UserProfile.objects.get(user=resUser)
         if resUser and resUser.is_active:
             auth.login(request, resUser)
             return JsonResponse({'message': '用户登录成功', 'data': {
@@ -56,6 +57,8 @@ def login(request):
                 'userName': resUser.username,
                 'firstName': resUser.first_name,
                 'lastName': resUser.last_name,
+                'avatarUrl': profile.avatar.image.url if profile.avatar else '',
+                'avatarId': profile.avatar.id if profile.avatar else '',
             }, 'ok': True, 'code': '200'}, status=200)
         else:
             return JsonResponse({'message': '登录失败，用户名或密码错误', 'code': '400'}, status=400)
@@ -74,17 +77,18 @@ def getUserInfo(request):
             return JsonResponse({'message': '缺少用户ID', 'code': '400'}, status=400)
         # 尝试获取 UserProfile 对象
         try:
-            user_profile = User.objects.get(user_id=id)
+            profile = UserProfile.objects.get(user__id=id)
         except User.DoesNotExist:
             return JsonResponse({'message': '用户信息不存在', 'code': '400'}, status=400)
         # 检查用户是否活跃
-        if user_profile.user.is_active:
+        if profile.user.is_active:
             return JsonResponse({'message': '获取信息成功', 'data': {
-                'id': user_profile.user.id,
-                'userName': user_profile.user.username,
-                'firstName': user_profile.user.first_name,
-                'lastName': user_profile.user.last_name,
-
+                'id': profile.user.id,
+                'userName': profile.user.username,
+                'firstName': profile.user.first_name,
+                'lastName': profile.user.last_name,
+                'avatarUrl': profile.avatar.image.url if profile.avatar else '',
+                'avatarId': profile.avatar.id if profile.avatar else '',
             }, 'ok': True, 'code': '200'}, status=200)
         else:
             return JsonResponse({'message': '用户账户未激活', 'code': '400'}, status=400)
@@ -111,16 +115,18 @@ def update_user_info(request):
         user.password = data.get('password', user.password)
         user.first_name = data.get('firstName', user.first_name)
         user.last_name = data.get('lastName', user.last_name)
-        image_id = data.get('image_id')
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        image_id = data.get('avatarId')
         if image_id:
             try:
                 image = ImageSave.objects.get(id=image_id)
-                user.image = image
+                profile.avatar = image
+
             except ImageSave.DoesNotExist:
                 return JsonResponse({'message': '图片不存在', 'code': '400'}, status=400)
         # 保存更新后的信息
         user.save()
-
+        profile.save()  # 确保保存UserProfile实例
         return JsonResponse({
             'message': '用户信息更新成功',
             'data': {
@@ -128,6 +134,7 @@ def update_user_info(request):
                 'userName': user.username,
                 'firstName': user.first_name,
                 'lastName': user.last_name,
+                'avatarId': profile.avatar.id if profile.avatar else None,
             },
             'ok': True,
             'code': '200'
